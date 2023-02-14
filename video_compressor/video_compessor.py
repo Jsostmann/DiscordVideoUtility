@@ -6,7 +6,7 @@ import threading
 import discord_util
 
 MAX_THREADS = os.cpu_count() - 1
-FFMPEG_PATH = os.path.join(os.getcwd(), "ffmpeg", "bin")
+FFMPEG_PATH = os.path.join(os.path.dirname(os.getcwd()), "ffmpeg", "bin")
 
 os.environ['PATH'] += os.pathsep + FFMPEG_PATH
 GAMES_LIST = ["Fortnite"]
