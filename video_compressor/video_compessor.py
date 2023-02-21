@@ -1,3 +1,4 @@
+import uuid
 import ffmpeg
 import os
 import time
@@ -11,20 +12,50 @@ FFMPEG_PATH = os.path.join(os.path.dirname(os.getcwd()), "ffmpeg", "bin")
 os.environ['PATH'] += os.pathsep + FFMPEG_PATH
 GAMES_LIST = ["Fortnite"]
 
+def generate_elimination_image(video_file, output_file):
+    probe = ffmpeg.probe(video_file)
+    time = int(float(probe['format']['duration']))
+    width = probe['streams'][0]['width']
+
+    vid_type = "None"
+    cap_at = time
+    if abs(time - 15) < 2:
+        vid_type = "killed"
+        cap_at = 11.99
+    elif abs(time - 20) < 2:
+        vid_type = "kill"
+        cap_at = 16
+    else:
+        print("unknown {}".format(video_file))
+        return
+
+    ffmpeg.input(video_file, ss=cap_at).filter('scale', width, -1).output(output_file.replace(".DVR.mp4",".jpg"), vframes=1).overwrite_output().run(quiet=True)
+    
+
 def compress_video(video_file):
     
     print("({}) Compressing file {}...".format(get_current_thread(), video_file))
     
     # target_size in bits
     target_size = 8 * 1000 * 1000 * 8
-    output_video_file = os.path.join(OUTPUT_DIRECTORY, *video_file.split(os.sep)[-2::])
-    
+
+    paths=video_file.split(os.sep)
+    #output_video_file = os.path.join(OUTPUT_DIRECTORY, *video_file.split(os.sep)[-2::])
+    video_output_directory = os.path.join(OUTPUT_DIRECTORY, paths[-2], paths[-1].replace(".DVR.mp4",""))
+
+    if not os.path.exists(video_output_directory):
+        os.makedirs(video_output_directory)
+
+    output_video_file = os.path.join(video_output_directory, paths[-1])
+
+    generate_elimination_image(video_file, output_video_file.replace(".DVR.mp4",".jpg"))
+    return
     probe = ffmpeg.probe(video_file)
     
     # Video duration rounded up in s.
     duration = int(float(probe['format']['duration'])) + 1
     total_bit_rate = target_size / duration
-
+    
     # Audio bitrate, in bps.
     audio_bitrate = 128 * 1000
     video_bitrate = total_bit_rate - audio_bitrate
@@ -46,7 +77,7 @@ def get_video_files():
     video_files = []
     for root, _, files in os.walk(INPUT_DIRECTORY):
         for file in files:
-            if len(video_files) > 3:
+            if len(video_files) > 1000:
                 return video_files
 
             if root.split(os.sep)[-1].strip() not in GAMES_LIST:

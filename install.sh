@@ -17,8 +17,10 @@ extract_ffmpeg () {
   if [ $? -eq 0 ]
   then
     echo "Successfully extracted ffmpeg"
+    rm $FILE_NAME
   else
     echo "Error while extracting ffmpeg"
+    rm $FILE_NAME
     exit 1
   fi
 }
@@ -37,8 +39,12 @@ download_ffmpeg() {
     fi
 }
 
+install_and_run() {
+  var=$(pip install -r video_compressor/requirements.txt -q)
+
+}
+
 download_ffmpeg
 extract_ffmpeg
-rm $FILE_NAME
-var=$(pip install -r video_compressor/requirements.txt -q)
+
 exit 0
